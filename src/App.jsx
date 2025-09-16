@@ -18,17 +18,6 @@ export default function App() {
     reader.readAsText(f);
   }
 
-  async function openNative() {
-    if (!window.electron) return;
-    const result = await window.electron.openFile();
-    if (!result) return;
-    try {
-      setDoc(JSON.parse(result.contents));
-    } catch (err) {
-      alert('Invalid JSON file')
-    }
-  }
-
   function download() {
     const data = JSON.stringify(doc, null, 2);
     if (window.electron) {
@@ -48,11 +37,16 @@ export default function App() {
     <div className="container">
       <header>
         <h1>Pivot Definitions Editor</h1>
-  <input type="file" accept=".json,application/json" onChange={onFile} />
-  {window.electron && <button onClick={openNative}>Open file (native)</button>}
+        <input type="file" accept=".json,application/json" onChange={onFile} />
         {doc && <button onClick={download}>Download modified JSON</button>}
       </header>
-      <main>{doc ? <PivotEditor doc={doc} setDoc={setDoc} /> : <p>Open Pipeline.osheet.json to start.</p>}</main>
+      <main>
+        {doc ? (
+          <PivotEditor doc={doc} setDoc={setDoc} />
+        ) : (
+          <p>Open Example.osheet.json to start.</p>
+        )}
+      </main>
     </div>
   );
 }

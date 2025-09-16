@@ -81,7 +81,7 @@ export default function PivotEditor({ doc, setDoc }) {
                 // ignore invalid json while typing
               }
             }}
-            rows={4}
+            style={{ minHeight: 120, resize: 'vertical', height: Math.max(120, (JSON.stringify(pivot.domain || [], null, 2).split('\n').length * 20)) }}
           />
         </label>
 
@@ -121,7 +121,7 @@ export default function PivotEditor({ doc, setDoc }) {
                 // ignore invalid json while typing
               }
             }}
-            rows={3}
+            style={{ minHeight: 120, resize: 'vertical', height: Math.max(120, (JSON.stringify(pivot.sortedColumn || null, null, 2).split('\n').length * 20)) }}
           />
         </label>
       </section>

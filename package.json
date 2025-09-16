@@ -4,15 +4,17 @@
   "private": true,
   "main": "main.js",
   "scripts": {
-  "dev": "vite --port 5173",
+    "dev": "vite --port 5173",
     "build": "vite build",
     "preview": "vite preview",
-  "electron:dev": "concurrently --kill-others --success first \"npm:dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:dev": "concurrently --kill-others --success first \"npm:dev\" \"wait-on http://localhost:5173 && electron .\"",
     "dist": "electron-builder"
   },
   "dependencies": {
+    "jsoneditor": "^10.4.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-jsoneditor-wrapper": "^1.1.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

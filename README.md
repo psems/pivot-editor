@@ -8,3 +8,10 @@ Quick start
 2. Install deps: `npm install`
 3. Run dev server: `npm run dev`
 4. Open the local URL printed by Vite, choose `Pipeline.osheet.json`, edit pivots, download modified JSON.
+
+Electron (native dialogs)
+
+1. Install dev deps: `npm install`
+2. Run the Electron dev flow: `npm run electron:dev`
+
+This starts Vite and then opens an Electron window with native Open/Save dialogs.

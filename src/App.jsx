@@ -18,8 +18,24 @@ export default function App() {
     reader.readAsText(f);
   }
 
+  async function openNative() {
+    if (!window.electron) return;
+    const result = await window.electron.openFile();
+    if (!result) return;
+    try {
+      setDoc(JSON.parse(result.contents));
+    } catch (err) {
+      alert('Invalid JSON file')
+    }
+  }
+
   function download() {
-    const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+    const data = JSON.stringify(doc, null, 2);
+    if (window.electron) {
+      window.electron.saveFile('Pipeline.osheet.modified.json', data);
+      return;
+    }
+    const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -32,7 +48,8 @@ export default function App() {
     <div className="container">
       <header>
         <h1>Pivot Definitions Editor</h1>
-        <input type="file" accept=".json,application/json" onChange={onFile} />
+  <input type="file" accept=".json,application/json" onChange={onFile} />
+  {window.electron && <button onClick={openNative}>Open file (native)</button>}
         {doc && <button onClick={download}>Download modified JSON</button>}
       </header>
       <main>{doc ? <PivotEditor doc={doc} setDoc={setDoc} /> : <p>Open Pipeline.osheet.json to start.</p>}</main>

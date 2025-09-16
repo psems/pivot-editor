@@ -2,16 +2,23 @@
   "name": "pivot-editor",
   "version": "0.1.0",
   "private": true,
+  "main": "main.js",
   "scripts": {
-    "dev": "vite",
+  "dev": "vite --port 5173",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+  "electron:dev": "concurrently --kill-others --success first \"npm:dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "vite": "^5.0.0"
+    "concurrently": "^8.2.2",
+    "electron": "^26.6.10",
+    "electron-builder": "^24.13.3",
+    "vite": "^5.0.0",
+    "wait-on": "^7.2.0"
   }
 }

@@ -9,3 +9,4 @@ header { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
 .pane { flex:1; }
 label { display:block; margin-bottom:10px; }
 input, textarea { width:100%; box-sizing:border-box; padding:6px; }
+

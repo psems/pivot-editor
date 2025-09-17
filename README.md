@@ -1,6 +1,13 @@
 
 # Pivot Editor
 
+**Author:** [Paul Sems](https://paulsems.com) (<paulsems@gmail.com>)
+
+**Description:**
+Pivot Editor is an open source utility for editing Odoo pipeline pivot table definitions (`osheet.json` files) with a modern, user-friendly UI. It supports both web and Electron desktop modes, and is designed for Odoo 17+ compatibility.
+
+---
+
 > **A simple desktop and web app for editing pivot table definitions in Odoo pipeline JSON files.**
 
 ---
@@ -18,10 +25,10 @@ Pivot Editor is a lightweight tool for editing the `pivots` section inside `Pipe
 
 ## Installation & Running
 
-
 ### 1. Prerequisites
 
 You will need:
+
 - [Node.js](https://nodejs.org/) (v16 or newer recommended)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
 - [git](https://git-scm.com/) (to clone the repository)
@@ -34,7 +41,7 @@ You will need:
 brew install node git
 ```
 
-If you don't have Homebrew, install it from https://brew.sh first.
+If you don't have Homebrew, install it from <https://brew.sh> first.
 
 **On Windows:**
 
@@ -44,6 +51,7 @@ If you don't have Homebrew, install it from https://brew.sh first.
 After installing, you can use the Command Prompt or PowerShell for the following steps.
 
 ### 2. Clone & Install
+
 ```sh
 # Clone the repository (if you haven't already)
 git clone <repo-url>
@@ -54,16 +62,20 @@ npm install
 ```
 
 ### 3. Run as a Web App (Vite Dev Server)
+
 ```sh
 npm run dev
 ```
-- Open the local URL printed in the terminal (usually http://localhost:5173)
+
+- Open the local URL printed in the terminal (usually <http://localhost:5173>)
 - Use the file picker to open your `Pipeline.osheet.json`, edit pivots, and download the modified file.
 
 ### 4. Run as a Desktop App (Electron)
+
 ```sh
 npm run electron:dev
 ```
+
 - This launches the app in an Electron window with native Open/Save dialogs.
 - All editing features are the same as the web version.
 
@@ -72,19 +84,23 @@ npm run electron:dev
 ## Building for Production
 
 - **Web build:**
-	```sh
-	npm run build
-	# Output in dist/
-	```
+
+```sh
+npm run build
+# Output in dist/
+```
+
 - **Electron package:**
-	```sh
-	npm run dist
-	# Creates a packaged Electron app (see electron-builder docs)
-	```
+
+```sh
+npm run dist
+# Creates a packaged Electron app (see electron-builder docs)
+```
 
 ---
 
 ## Project Structure
+
 - `src/` — React source code
 - `main.js` — Electron main process
 - `preload.js` — Electron preload script (secure API bridge)
@@ -94,4 +110,13 @@ npm run electron:dev
 ---
 
 ## License
+
 MIT
+
+---
+
+### Icon Attribution
+
+The table icon (`table.svg`) is from [Bootstrap Icons](https://icons.getbootstrap.com/icons/table/), licensed under the MIT License.
+
+Attribution: © 2019-2024 The Bootstrap Authors

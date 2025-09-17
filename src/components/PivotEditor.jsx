@@ -1,9 +1,31 @@
-import React, { useState, useMemo } from "react";
+/**
+ * Minimal validation for a pivot definition object.
+ * @param {object} pivot - The pivot definition to validate.
+ * @returns {boolean} True if valid, false otherwise.
+ */
+function isValidPivot(pivot) {
+  if (!pivot.id || !pivot.name || !pivot.model) return false;
+  if (!Array.isArray(pivot.measures) || !Array.isArray(pivot.rowGroupBys)) return false;
+  if (!Array.isArray(pivot.domain)) return false;
+  return true;
+}
+
+import React, { useState, useMemo, useEffect } from "react";
+
+/**
+ * PivotEditor component for editing a single pivot definition.
+ * @param {{ doc: object, setDoc: function }} props - The document and setter.
+ */
 
 export default function PivotEditor({ doc, setDoc }) {
   const pivots = doc.pivots || {};
   const keys = Object.keys(pivots);
   const [selected, setSelected] = useState(keys[0] || null);
+
+  // Reset selected pivot when doc changes (e.g., new file loaded)
+  useEffect(() => {
+    setSelected(keys[0] || null);
+  }, [doc]);
 
   const pivot = useMemo(() => (selected ? JSON.parse(JSON.stringify(pivots[selected])) : null), [selected, pivots]);
 
@@ -85,28 +107,81 @@ export default function PivotEditor({ doc, setDoc }) {
           />
         </label>
 
+
         <label>
-          Row group by (comma separated)
-          <input
-            value={(pivot.rowGroupBys || []).join(",")}
-            onChange={(e) => applyUpdate({ rowGroupBys: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
-          />
+          Row group by
+          <table style={{ width: '100%', marginBottom: 10 }}>
+            <tbody>
+              {(pivot.rowGroupBys || []).map((val, idx) => (
+                <tr key={idx}>
+                  <td>
+                    <input
+                      value={val}
+                      onChange={e => {
+                        const arr = [...(pivot.rowGroupBys || [])];
+                        arr[idx] = e.target.value;
+                        applyUpdate({ rowGroupBys: arr });
+                      }}
+                      style={{ width: '90%' }}
+                    />
+                  </td>
+                  <td>
+                    <button type="button" onClick={() => {
+                      const arr = [...(pivot.rowGroupBys || [])];
+                      arr.splice(idx, 1);
+                      applyUpdate({ rowGroupBys: arr });
+                    }}>🗑️</button>
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={2}>
+                  <button type="button" onClick={() => {
+                    const arr = [...(pivot.rowGroupBys || []), ""];
+                    applyUpdate({ rowGroupBys: arr });
+                  }}>Add row</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </label>
 
         <label>
-          Measures (comma separated field names)
-          <input
-            value={(pivot.measures || []).map((m) => m.field || m).join(",")}
-            onChange={(e) =>
-              applyUpdate({
-                measures: e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((f) => ({ field: f }))
-              })
-            }
-          />
+          Measures
+          <table style={{ width: '100%', marginBottom: 10 }}>
+            <tbody>
+              {(pivot.measures || []).map((m, idx) => (
+                <tr key={idx}>
+                  <td>
+                    <input
+                      value={m.field || ""}
+                      onChange={e => {
+                        const arr = [...(pivot.measures || [])];
+                        arr[idx] = { field: e.target.value };
+                        applyUpdate({ measures: arr });
+                      }}
+                      style={{ width: '90%' }}
+                    />
+                  </td>
+                  <td>
+                    <button type="button" onClick={() => {
+                      const arr = [...(pivot.measures || [])];
+                      arr.splice(idx, 1);
+                      applyUpdate({ measures: arr });
+                    }}>🗑️</button>
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={2}>
+                  <button type="button" onClick={() => {
+                    const arr = [...(pivot.measures || []), { field: "" }];
+                    applyUpdate({ measures: arr });
+                  }}>Add row</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </label>
 
         <label>

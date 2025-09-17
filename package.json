@@ -1,5 +1,7 @@
 {
   "name": "pivot-editor",
+  "description": "A simple open source utility for editing Odoo pipeline pivot table definitions (osheet.json files) with a modern UI.",
+  "author": "Paul Sems <paulsems@gmail.com>",
   "version": "0.1.0",
   "private": true,
   "main": "main.js",

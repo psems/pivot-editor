@@ -10,14 +10,14 @@ function isValidPivot(pivot) {
   return true;
 }
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 
 /**
  * PivotEditor component for editing a single pivot definition.
  * @param {{ doc: object, setDoc: function }} props - The document and setter.
  */
 
-export default function PivotEditor({ doc, setDoc }) {
+export default function PivotEditor({ doc, setDoc, saveRef, discardRef, onDirty }) {
   const pivots = doc.pivots || {};
   const keys = Object.keys(pivots);
   const [selected, setSelected] = useState(keys[0] || null);
@@ -27,15 +27,70 @@ export default function PivotEditor({ doc, setDoc }) {
     setSelected(keys[0] || null);
   }, [doc]);
 
-  const pivot = useMemo(() => (selected ? JSON.parse(JSON.stringify(pivots[selected])) : null), [selected, pivots]);
 
-  function applyUpdate(changes) {
-    const newDoc = { ...doc, pivots: { ...doc.pivots } };
-    newDoc.pivots[selected] = { ...newDoc.pivots[selected], ...changes };
-    setDoc(newDoc);
+  // Local edit state for the selected pivot
+  const [editPivot, setEditPivot] = useState(selected ? JSON.parse(JSON.stringify(pivots[selected])) : null);
+  // Track if there are unsaved changes
+  const [dirty, setDirty] = useState(false);
+  const isInitial = useRef(true); // Track if this is the first load
+
+  // Reset dirty when selected pivot changes
+  useEffect(() => {
+    onDirty(false);
+  }, [selected, onDirty]);
+
+  // Set dirty only on user changes (skip initial load)
+  useEffect(() => {
+    if (isInitial.current) {
+      isInitial.current = false;
+      return;
+    }
+    onDirty(true);
+  }, [editPivot, onDirty]);
+
+  function applyEditUpdate(changes) {
+    setEditPivot(prev => ({ ...prev, ...changes }));
+    setDirty(true);
+    if (onDirty) onDirty(true);
   }
 
-  if (!selected) {
+  function saveEdit() {
+    // If ID changed, move key
+    const newId = editPivot.id;
+    if (!newId || pivots[newId] && newId !== selected) return;
+    let newPivots = { ...pivots };
+    if (newId !== selected) {
+      newPivots[newId] = { ...editPivot };
+      delete newPivots[selected];
+    } else {
+      newPivots[newId] = { ...editPivot };
+    }
+    setDoc({ ...doc, pivots: newPivots });
+    setSelected(newId);
+    setDirty(false);
+  if (onDirty) onDirty(false);
+  }
+
+  function discardEdit() {
+    setEditPivot(selected ? JSON.parse(JSON.stringify(pivots[selected])) : null);
+    setDirty(false);
+  if (onDirty) onDirty(false);
+  // Reset selected to match doc keys (in case user changed ID but didn't save)
+  const resetKey = Object.keys(pivots).includes(selected) ? selected : Object.keys(pivots)[0];
+  setSelected(resetKey);
+  setEditPivot(resetKey ? JSON.parse(JSON.stringify(pivots[resetKey])) : null);
+  setDirty(false);
+  if (onDirty) onDirty(false);
+  }
+
+  // Expose save/discard to parent via refs
+  useEffect(() => {
+    if (saveRef) saveRef.current = saveEdit;
+    if (discardRef) discardRef.current = discardEdit;
+  });
+
+
+  if (!selected || !editPivot) {
     return <div>No pivots found.</div>;
   }
 
@@ -79,31 +134,45 @@ export default function PivotEditor({ doc, setDoc }) {
         </button>
       </aside>
 
+
       <section className="pane">
         <h2>Edit pivot: {selected}</h2>
         <label>
+          Pivot Number (ID)
+          <input
+              value={editPivot.id}
+              onChange={e => {
+                const newId = e.target.value.trim();
+                if (!newId || (pivots[newId] && newId !== selected)) return; // prevent empty/duplicate
+                setEditPivot(prev => ({ ...prev, id: newId }));
+                setDirty(true);
+              }}
+            style={{ width: 80, marginRight: 8 }}
+          />
+        </label>
+        <label>
           Name
-          <input value={pivot.name || ""} onChange={(e) => applyUpdate({ name: e.target.value })} />
+          <input value={editPivot.name || ""} onChange={e => applyEditUpdate({ name: e.target.value })} />
         </label>
 
         <label>
           Model
-          <input value={pivot.model || pivot.modelName || ""} onChange={(e) => applyUpdate({ model: e.target.value })} />
+          <input value={editPivot.model || editPivot.modelName || ""} onChange={e => applyEditUpdate({ model: e.target.value })} />
         </label>
 
         <label>
           Domain (JSON)
           <textarea
-            value={JSON.stringify(pivot.domain || [], null, 2)}
-            onChange={(e) => {
+            value={JSON.stringify(editPivot.domain || [], null, 2)}
+            onChange={e => {
               try {
                 const parsed = JSON.parse(e.target.value);
-                applyUpdate({ domain: parsed });
+                applyEditUpdate({ domain: parsed });
               } catch {
                 // ignore invalid json while typing
               }
             }}
-            style={{ minHeight: 120, resize: 'vertical', height: Math.max(120, (JSON.stringify(pivot.domain || [], null, 2).split('\n').length * 20)) }}
+            style={{ minHeight: 120, resize: 'vertical', height: Math.max(120, (JSON.stringify(editPivot.domain || [], null, 2).split('\n').length * 20)) }}
           />
         </label>
 
@@ -112,24 +181,24 @@ export default function PivotEditor({ doc, setDoc }) {
           Row group by
           <table style={{ width: '100%', marginBottom: 10 }}>
             <tbody>
-              {(pivot.rowGroupBys || []).map((val, idx) => (
+              {(editPivot.rowGroupBys || []).map((val, idx) => (
                 <tr key={idx}>
                   <td>
                     <input
                       value={val}
                       onChange={e => {
-                        const arr = [...(pivot.rowGroupBys || [])];
+                        const arr = [...(editPivot.rowGroupBys || [])];
                         arr[idx] = e.target.value;
-                        applyUpdate({ rowGroupBys: arr });
+                        applyEditUpdate({ rowGroupBys: arr });
                       }}
                       style={{ width: '90%' }}
                     />
                   </td>
                   <td>
                     <button type="button" onClick={() => {
-                      const arr = [...(pivot.rowGroupBys || [])];
+                      const arr = [...(editPivot.rowGroupBys || [])];
                       arr.splice(idx, 1);
-                      applyUpdate({ rowGroupBys: arr });
+                      applyEditUpdate({ rowGroupBys: arr });
                     }}>🗑️</button>
                   </td>
                 </tr>
@@ -137,8 +206,8 @@ export default function PivotEditor({ doc, setDoc }) {
               <tr>
                 <td colSpan={2}>
                   <button type="button" onClick={() => {
-                    const arr = [...(pivot.rowGroupBys || []), ""];
-                    applyUpdate({ rowGroupBys: arr });
+                    const arr = [...(editPivot.rowGroupBys || []), ""];
+                    applyEditUpdate({ rowGroupBys: arr });
                   }}>Add row</button>
                 </td>
               </tr>
@@ -150,24 +219,24 @@ export default function PivotEditor({ doc, setDoc }) {
           Measures
           <table style={{ width: '100%', marginBottom: 10 }}>
             <tbody>
-              {(pivot.measures || []).map((m, idx) => (
+              {(editPivot.measures || []).map((m, idx) => (
                 <tr key={idx}>
                   <td>
                     <input
                       value={m.field || ""}
                       onChange={e => {
-                        const arr = [...(pivot.measures || [])];
+                        const arr = [...(editPivot.measures || [])];
                         arr[idx] = { field: e.target.value };
-                        applyUpdate({ measures: arr });
+                        applyEditUpdate({ measures: arr });
                       }}
                       style={{ width: '90%' }}
                     />
                   </td>
                   <td>
                     <button type="button" onClick={() => {
-                      const arr = [...(pivot.measures || [])];
+                      const arr = [...(editPivot.measures || [])];
                       arr.splice(idx, 1);
-                      applyUpdate({ measures: arr });
+                      applyEditUpdate({ measures: arr });
                     }}>🗑️</button>
                   </td>
                 </tr>
@@ -175,8 +244,8 @@ export default function PivotEditor({ doc, setDoc }) {
               <tr>
                 <td colSpan={2}>
                   <button type="button" onClick={() => {
-                    const arr = [...(pivot.measures || []), { field: "" }];
-                    applyUpdate({ measures: arr });
+                    const arr = [...(editPivot.measures || []), { field: "" }];
+                    applyEditUpdate({ measures: arr });
                   }}>Add row</button>
                 </td>
               </tr>
@@ -187,18 +256,19 @@ export default function PivotEditor({ doc, setDoc }) {
         <label>
           SortedColumn (JSON)
           <textarea
-            value={JSON.stringify(pivot.sortedColumn || null, null, 2)}
-            onChange={(e) => {
+            value={JSON.stringify(editPivot.sortedColumn || null, null, 2)}
+            onChange={e => {
               try {
                 const parsed = JSON.parse(e.target.value);
-                applyUpdate({ sortedColumn: parsed });
+                applyEditUpdate({ sortedColumn: parsed });
               } catch {
                 // ignore invalid json while typing
               }
             }}
-            style={{ minHeight: 120, resize: 'vertical', height: Math.max(120, (JSON.stringify(pivot.sortedColumn || null, null, 2).split('\n').length * 20)) }}
+            style={{ minHeight: 120, resize: 'vertical', height: Math.max(120, (JSON.stringify(editPivot.sortedColumn || null, null, 2).split('\n').length * 20)) }}
           />
         </label>
+        {/* Save/Discard buttons moved to top bar */}
       </section>
     </div>
   );

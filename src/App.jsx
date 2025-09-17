@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import PivotEditor from "./components/PivotEditor";
 
 /**
@@ -61,21 +61,51 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
-  // Main UI layout
+  // Save/discard refs for top-level buttons
+  const saveRef = useRef(null);
+  const discardRef = useRef(null);
+  const [dirty, setDirty] = useState(false);
+
+
+  // Handler to be called by PivotEditor to update dirty state
+  function handleDirty(isDirty) {
+    setDirty(isDirty);
+  }
+
+  // Reset dirty state when doc changes (e.g., new file loaded)
+  React.useEffect(() => {
+    setDirty(false);
+  }, [doc]);
+
+  // Save/discard handlers for top bar
+  function handleSave() {
+    if (saveRef.current) saveRef.current();
+  }
+  function handleDiscard() {
+    if (discardRef.current) discardRef.current();
+  }
+
   return (
     <div className="container">
-      <header>
+      <header style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
         <img src="/table.svg" alt="App icon" width={32} height={32} style={{verticalAlign:'middle',marginRight:8}} />
-        <h1 style={{display:'inline', verticalAlign:'middle'}}>Pivot Definitions Editor</h1>
-        {/* File input for loading osheet.json files */}
-        <input type="file" accept=".json,application/json" onChange={onFile} />
-        {/* Download button appears only when a file is loaded */}
-        {doc && <button onClick={download}>Download modified JSON</button>}
+        <h1 style={{display:'inline', verticalAlign:'middle',marginRight:24}}>Pivot Definitions Editor</h1>
+        <input type="file" accept=".json,application/json" onChange={onFile} style={{marginRight:8}} />
+        {doc && <>
+          <button onClick={download} style={{marginRight:8}}>Download</button>
+          <button onClick={handleSave} disabled={!dirty} style={{marginRight:8}}>Save</button>
+          <button onClick={handleDiscard} disabled={!dirty}>Discard</button>
+        </>}
       </header>
       <main>
-        {/* Show the editor if a file is loaded, otherwise show instructions */}
         {doc ? (
-          <PivotEditor doc={doc} setDoc={setDoc} />
+          <PivotEditor
+            doc={doc}
+            setDoc={setDoc}
+            saveRef={saveRef}
+            discardRef={discardRef}
+            onDirty={handleDirty}
+          />
         ) : (
           <p>Open Example.osheet.json to start.</p>
         )}

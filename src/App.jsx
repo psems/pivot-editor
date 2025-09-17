@@ -37,6 +37,48 @@ export default function App() {
   }
 
   /**
+   * Import pivots from another osheet.json file and merge into current doc.
+   * New pivot IDs will be assigned starting after the largest numeric ID
+   * present in the current document to avoid collisions. Imported pivots
+   * will be named "imported" as requested.
+   */
+  function onImportPivots(e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = JSON.parse(reader.result);
+        const importedPivots = (imported && imported.pivots) ? imported.pivots : {};
+        const importCount = Object.keys(importedPivots).length;
+        if (importCount === 0) {
+          alert('No pivots found in the imported file.');
+          return;
+        }
+        const existingPivots = (doc && doc.pivots) ? { ...doc.pivots } : {};
+        const numericIds = Object.keys(existingPivots).map(k => Number(k)).filter(n => !Number.isNaN(n));
+        let maxId = numericIds.length ? Math.max(...numericIds) : 0;
+        const newPivots = { ...existingPivots };
+        Object.values(importedPivots).forEach((p) => {
+          maxId += 1;
+          const idStr = String(maxId);
+          const copy = { ...p, id: idStr, name: 'imported' };
+          newPivots[idStr] = copy;
+        });
+        const newDoc = { ...(doc || {}), pivots: newPivots };
+        setDoc(newDoc);
+        setFilename(f.name);
+        alert(`Imported ${importCount} pivots starting at ID ${String(maxId - importCount + 1)}.`);
+      } catch (err) {
+        alert('Invalid JSON file');
+      }
+    };
+    reader.readAsText(f);
+    // clear the input so selecting the same file again will fire change
+    e.target.value = null;
+  }
+
+  /**
    * Downloads the current pivot document as a JSON file.
    * The filename is based on the original, with a timestamp inserted before .osheet.json.
    */
@@ -93,6 +135,7 @@ export default function App() {
         <input type="file" accept=".json,application/json" onChange={onFile} style={{marginRight:8}} />
         {doc && <>
           <button onClick={download} style={{marginRight:8}}>Download</button>
+          <input type="file" accept=".json,application/json" onChange={onImportPivots} style={{marginRight:8}} />
           <button onClick={handleSave} disabled={!dirty} style={{marginRight:8}}>Save</button>
           <button onClick={handleDiscard} disabled={!dirty}>Discard</button>
         </>}

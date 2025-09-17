@@ -11,6 +11,14 @@ function isValidPivot(pivot) {
 }
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
 
 /**
  * PivotEditor component for editing a single pivot definition.
@@ -114,70 +122,91 @@ export default function PivotEditor({ doc, setDoc, saveRef, discardRef, onDirty 
     return <div>No pivots found.</div>;
   }
 
+  // Render pivot list as a table
   return (
-    <div className="editor">
-      <aside className="sidebar">
-        <h3>Pivots</h3>
-        <ul>
-          {keys.map((k) => (
-            <li key={k}>
-              <button className={k === selected ? "active" : ""} onClick={() => setSelected(k)}>
-                {k} — {pivots[k].name || "unnamed"}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <hr />
-        <button
-          onClick={() => {
-            const id = String(Math.max(...keys.map(Number)) + 1);
-            const newPivot = { id, name: "new pivot", model: "crm.lead", measures: [], rowGroupBys: [] };
-            const newDoc = { ...doc, pivots: { ...doc.pivots, [id]: newPivot } };
-            setDoc(newDoc);
-            setSelected(id);
-          }}
-        >
-          Add pivot
-        </button>
-        <button
-          onClick={() => {
-            if (!confirm("Delete selected pivot?")) return;
-            const newPivots = { ...doc.pivots };
-            delete newPivots[selected];
-            const newDoc = { ...doc, pivots: newPivots };
-            setDoc(newDoc);
-            const remaining = Object.keys(newPivots);
-            setSelected(remaining[0] || null);
-          }}
-        >
-          Delete pivot
-        </button>
-      </aside>
+    <div>
 
+  <TableContainer component={Paper} sx={{ mb: 4, maxHeight: 320, overflowY: 'auto' }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ background: '#f9fafb' }}>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Model</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {keys.map((k) => (
+              <TableRow
+                key={k}
+                hover
+                selected={k === selected}
+                onClick={() => setSelected(k)}
+                sx={{ cursor: 'pointer', backgroundColor: k === selected ? 'primary.lighter' : undefined }}
+              >
+                <TableCell>{k}</TableCell>
+                <TableCell>{pivots[k].name || 'unnamed'}</TableCell>
+                <TableCell>{pivots[k].model || ''}</TableCell>
+                <TableCell>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={e => {
+                      e.stopPropagation();
+                      if (!window.confirm('Delete selected pivot?')) return;
+                      const newPivots = { ...doc.pivots };
+                      delete newPivots[k];
+                      const newDoc = { ...doc, pivots: newPivots };
+                      setDoc(newDoc);
+                      const remaining = Object.keys(newPivots);
+                      setSelected(remaining[0] || null);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Button
+        variant="outlined"
+        onClick={() => {
+          const id = String(Math.max(0, ...keys.map(Number)) + 1);
+          const newPivot = { id, name: 'new pivot', model: 'crm.lead', measures: [], rowGroupBys: [] };
+          const newDoc = { ...doc, pivots: { ...doc.pivots, [id]: newPivot } };
+          setDoc(newDoc);
+          setSelected(id);
+        }}
+        sx={{ mb: 3 }}
+      >
+        Add pivot
+      </Button>
 
-      <section className="pane">
-        <h2>Edit pivot: {selected}</h2>
-        <label>
+      <div style={{ border: '1px solid #eee', borderRadius: 8, padding: 24, background: '#fff' }}>
+        <h2 style={{ marginTop: 0 }}>Edit pivot: {selected}</h2>
+        <label style={{ display: 'block', marginBottom: 8 }}>
           Pivot Number (ID)
           <input
-              value={editPivot.id}
-              onChange={e => {
-                const newId = e.target.value.trim();
-                if (!newId || (pivots[newId] && newId !== selected)) return; // prevent empty/duplicate
-                setEditPivot(prev => ({ ...prev, id: newId }));
-                setDirty(true);
-              }}
-            style={{ width: 80, marginRight: 8 }}
+            value={editPivot.id}
+            onChange={e => {
+              const newId = e.target.value.trim();
+              if (!newId || (pivots[newId] && newId !== selected)) return; // prevent empty/duplicate
+              setEditPivot(prev => ({ ...prev, id: newId }));
+              setDirty(true);
+            }}
+            style={{ width: 80, marginLeft: 8 }}
           />
         </label>
-        <label>
+        <label style={{ display: 'block', marginBottom: 8 }}>
           Name
-          <input value={editPivot.name || ""} onChange={e => applyEditUpdate({ name: e.target.value })} />
+          <input value={editPivot.name || ""} onChange={e => applyEditUpdate({ name: e.target.value })} style={{ marginLeft: 8 }} />
         </label>
-
-        <label>
+        <label style={{ display: 'block', marginBottom: 8 }}>
           Model
-          <input value={editPivot.model || editPivot.modelName || ""} onChange={e => applyEditUpdate({ model: e.target.value })} />
+          <input value={editPivot.model || editPivot.modelName || ""} onChange={e => applyEditUpdate({ model: e.target.value })} style={{ marginLeft: 8 }} />
         </label>
 
         <label>
@@ -289,7 +318,8 @@ export default function PivotEditor({ doc, setDoc, saveRef, discardRef, onDirty 
           />
         </label>
         {/* Save/Discard buttons moved to top bar */}
-      </section>
+        {/* End of edit panel */}
+      </div>
     </div>
   );
 }

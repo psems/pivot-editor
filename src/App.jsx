@@ -4,6 +4,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
+import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
+import CardContent from '@mui/material/CardContent';
+import DashboardLayout from './layout/DashboardLayout';
 
 /**
  * App component for the Pivot Editor utility.
@@ -95,33 +99,49 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <div className="container">
-        <header style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
-          <img src="/table.svg" alt="App icon" width={32} height={32} style={{verticalAlign:'middle',marginRight:8}} />
-          <h1 style={{display:'inline', verticalAlign:'middle',marginRight:24}}>Pivot Definitions Editor</h1>
-          <input type="file" accept=".json,application/json" onChange={onFile} style={{marginRight:8}} />
-          {doc && (
-            <Stack direction="row" spacing={1} style={{marginLeft:'auto'}}>
-              <Button variant="outlined" onClick={download}>Download</Button>
-              <Button variant="contained" color="primary" onClick={handleSave} disabled={!dirty}>Save</Button>
-              <Button variant="outlined" color="inherit" onClick={handleDiscard} disabled={!dirty}>Discard</Button>
-            </Stack>
-          )}
-        </header>
-        <main>
-          {doc ? (
-            <PivotEditor
-              doc={doc}
-              setDoc={setDoc}
-              saveRef={saveRef}
-              discardRef={discardRef}
-              onDirty={handleDirty}
-            />
-          ) : (
-            <p>Open Example.osheet.json to start.</p>
-          )}
-        </main>
-      </div>
+      <DashboardLayout>
+        <Card sx={{ maxWidth: 1200, mx: 'auto', mt: 4, boxShadow: 3 }}>
+          <CardHeader
+            title="Pivots"
+            action={
+              <Stack direction="row" spacing={2}>
+                <Button variant="outlined" color="primary" component="label">
+                  Import
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    hidden
+                    onChange={onFile}
+                  />
+                </Button>
+                <Button variant="outlined" color="primary" onClick={download} disabled={!doc}>
+                  Export
+                </Button>
+                <Button variant="contained" color="primary" onClick={handleSave} disabled={!doc || !dirty}>
+                  Save
+                </Button>
+                <Button variant="text" color="primary" onClick={handleDiscard} disabled={!doc || !dirty}>
+                  Discard
+                </Button>
+              </Stack>
+            }
+            sx={{ pb: 0, pt: 2, px: 3 }}
+          />
+          <CardContent>
+            {doc ? (
+              <PivotEditor
+                doc={doc}
+                setDoc={setDoc}
+                saveRef={saveRef}
+                discardRef={discardRef}
+                onDirty={handleDirty}
+              />
+            ) : (
+              <p>Import a .osheet.json file to start.</p>
+            )}
+          </CardContent>
+        </Card>
+      </DashboardLayout>
     </ThemeProvider>
   );
 }

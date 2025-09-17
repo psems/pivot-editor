@@ -1,7 +1,5 @@
-
 import React, { useState, useRef } from "react";
 import PivotEditor from "./components/PivotEditor";
-import ReactDOM from 'react-dom';
 
 /**
  * App component for the Pivot Editor utility.
@@ -35,52 +33,6 @@ export default function App() {
       }
     };
     reader.readAsText(f);
-  }
-
-  /**
-   * Import pivots from another osheet.json file and merge into current doc.
-   * New pivot IDs will be assigned starting after the largest numeric ID
-   * present in the current document to avoid collisions. Imported pivots
-   * will be named "imported" as requested.
-   */
-  function onImportPivots(e) {
-    const f = e.target.files[0];
-    if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        console.debug('Import pivots: file loaded', f.name);
-        const imported = JSON.parse(reader.result);
-        const importedPivots = (imported && imported.pivots) ? imported.pivots : {};
-        console.debug('Import pivots: found pivots', Object.keys(importedPivots));
-        const importCount = Object.keys(importedPivots).length;
-        if (importCount === 0) {
-          alert('No pivots found in the imported file.');
-          return;
-        }
-        const existingPivots = (doc && doc.pivots) ? { ...doc.pivots } : {};
-        console.debug('Import pivots: existing pivot keys', Object.keys(existingPivots));
-        const numericIds = Object.keys(existingPivots).map(k => Number(k)).filter(n => !Number.isNaN(n));
-        let maxId = numericIds.length ? Math.max(...numericIds) : 0;
-        const newPivots = { ...existingPivots };
-        Object.values(importedPivots).forEach((p) => {
-          maxId += 1;
-          const idStr = String(maxId);
-          const copy = { ...p, id: idStr, name: 'imported' };
-          newPivots[idStr] = copy;
-        });
-        console.debug('Import pivots: new pivot keys', Object.keys(newPivots));
-        const newDoc = { ...(doc || {}), pivots: newPivots };
-        setDoc(newDoc);
-        setFilename(f.name);
-        alert(`Imported ${importCount} pivots starting at ID ${String(maxId - importCount + 1)}.`);
-      } catch (err) {
-        alert('Invalid JSON file');
-      }
-    };
-    reader.readAsText(f);
-    // clear the input so selecting the same file again will fire change
-    e.target.value = null;
   }
 
   /**
@@ -140,7 +92,6 @@ export default function App() {
         <input type="file" accept=".json,application/json" onChange={onFile} style={{marginRight:8}} />
         {doc && <>
           <button onClick={download} style={{marginRight:8}}>Download</button>
-          <input type="file" accept=".json,application/json" onChange={onImportPivots} style={{marginRight:8}} />
           <button onClick={handleSave} disabled={!dirty} style={{marginRight:8}}>Save</button>
           <button onClick={handleDiscard} disabled={!dirty}>Discard</button>
         </>}

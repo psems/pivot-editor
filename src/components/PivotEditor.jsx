@@ -28,8 +28,10 @@ export default function PivotEditor({ doc, setDoc, saveRef, discardRef, onDirty 
   }, [doc]);
 
 
-  // Local edit state for the selected pivot
-  const [editPivot, setEditPivot] = useState(selected ? JSON.parse(JSON.stringify(pivots[selected])) : null);
+  // Local edit state for the selected pivot. Initialize to null and
+  // rehydrate below when `selected` or `doc` changes so the UI stays
+  // in sync with the sidebar selection.
+  const [editPivot, setEditPivot] = useState(null);
   // Track if there are unsaved changes
   const [dirty, setDirty] = useState(false);
   const isInitial = useRef(true); // Track if this is the first load
@@ -38,6 +40,28 @@ export default function PivotEditor({ doc, setDoc, saveRef, discardRef, onDirty 
   useEffect(() => {
     onDirty(false);
   }, [selected, onDirty]);
+
+
+  // Keep `editPivot` in sync when the selection or the document changes.
+  // Mark this as an initial (non-user) load so the `editPivot` effect
+  // that sets `onDirty(true)` doesn't trigger spuriously.
+  useEffect(() => {
+    if (!selected) {
+      setEditPivot(null);
+      isInitial.current = true;
+      setDirty(false);
+      if (onDirty) onDirty(false);
+      return;
+    }
+
+    const pivotData = pivots[selected] ? JSON.parse(JSON.stringify(pivots[selected])) : null;
+    setEditPivot(pivotData);
+    // Treat this as an initial load so the edit change watcher doesn't
+    // mark the document dirty immediately.
+    isInitial.current = true;
+    setDirty(false);
+    if (onDirty) onDirty(false);
+  }, [selected, doc]);
 
   // Set dirty only on user changes (skip initial load)
   useEffect(() => {
@@ -72,15 +96,11 @@ export default function PivotEditor({ doc, setDoc, saveRef, discardRef, onDirty 
   }
 
   function discardEdit() {
-    setEditPivot(selected ? JSON.parse(JSON.stringify(pivots[selected])) : null);
+    // Resetting selection will cause the `useEffect` to rehydrate `editPivot`.
+    const resetKey = Object.keys(pivots).includes(selected) ? selected : Object.keys(pivots)[0];
+    setSelected(resetKey);
     setDirty(false);
-  if (onDirty) onDirty(false);
-  // Reset selected to match doc keys (in case user changed ID but didn't save)
-  const resetKey = Object.keys(pivots).includes(selected) ? selected : Object.keys(pivots)[0];
-  setSelected(resetKey);
-  setEditPivot(resetKey ? JSON.parse(JSON.stringify(pivots[resetKey])) : null);
-  setDirty(false);
-  if (onDirty) onDirty(false);
+    if (onDirty) onDirty(false);
   }
 
   // Expose save/discard to parent via refs

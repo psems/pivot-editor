@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from "react";
 import PivotEditor from "./components/PivotEditor";
+import ReactDOM from 'react-dom';
 
 /**
  * App component for the Pivot Editor utility.
@@ -48,14 +49,17 @@ export default function App() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
+        console.debug('Import pivots: file loaded', f.name);
         const imported = JSON.parse(reader.result);
         const importedPivots = (imported && imported.pivots) ? imported.pivots : {};
+        console.debug('Import pivots: found pivots', Object.keys(importedPivots));
         const importCount = Object.keys(importedPivots).length;
         if (importCount === 0) {
           alert('No pivots found in the imported file.');
           return;
         }
         const existingPivots = (doc && doc.pivots) ? { ...doc.pivots } : {};
+        console.debug('Import pivots: existing pivot keys', Object.keys(existingPivots));
         const numericIds = Object.keys(existingPivots).map(k => Number(k)).filter(n => !Number.isNaN(n));
         let maxId = numericIds.length ? Math.max(...numericIds) : 0;
         const newPivots = { ...existingPivots };
@@ -65,6 +69,7 @@ export default function App() {
           const copy = { ...p, id: idStr, name: 'imported' };
           newPivots[idStr] = copy;
         });
+        console.debug('Import pivots: new pivot keys', Object.keys(newPivots));
         const newDoc = { ...(doc || {}), pivots: newPivots };
         setDoc(newDoc);
         setFilename(f.name);

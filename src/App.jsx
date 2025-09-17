@@ -1,5 +1,9 @@
 import React, { useState, useRef } from "react";
 import PivotEditor from "./components/PivotEditor";
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 
 /**
  * App component for the Pivot Editor utility.
@@ -9,6 +13,10 @@ import PivotEditor from "./components/PivotEditor";
  * @see https://paulsems.com
  */
 
+
+const theme = createTheme({
+  palette: { primary: { main: '#0ea5a4' } },
+});
 
 export default function App() {
   // State for the loaded pivot document
@@ -85,30 +93,35 @@ export default function App() {
   }
 
   return (
-    <div className="container">
-      <header style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
-        <img src="/table.svg" alt="App icon" width={32} height={32} style={{verticalAlign:'middle',marginRight:8}} />
-        <h1 style={{display:'inline', verticalAlign:'middle',marginRight:24}}>Pivot Definitions Editor</h1>
-        <input type="file" accept=".json,application/json" onChange={onFile} style={{marginRight:8}} />
-        {doc && <>
-          <button onClick={download} style={{marginRight:8}}>Download</button>
-          <button onClick={handleSave} disabled={!dirty} style={{marginRight:8}}>Save</button>
-          <button onClick={handleDiscard} disabled={!dirty}>Discard</button>
-        </>}
-      </header>
-      <main>
-        {doc ? (
-          <PivotEditor
-            doc={doc}
-            setDoc={setDoc}
-            saveRef={saveRef}
-            discardRef={discardRef}
-            onDirty={handleDirty}
-          />
-        ) : (
-          <p>Open Example.osheet.json to start.</p>
-        )}
-      </main>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <div className="container">
+        <header style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+          <img src="/table.svg" alt="App icon" width={32} height={32} style={{verticalAlign:'middle',marginRight:8}} />
+          <h1 style={{display:'inline', verticalAlign:'middle',marginRight:24}}>Pivot Definitions Editor</h1>
+          <input type="file" accept=".json,application/json" onChange={onFile} style={{marginRight:8}} />
+          {doc && (
+            <Stack direction="row" spacing={1} style={{marginLeft:'auto'}}>
+              <Button variant="outlined" onClick={download}>Download</Button>
+              <Button variant="contained" color="primary" onClick={handleSave} disabled={!dirty}>Save</Button>
+              <Button variant="outlined" color="inherit" onClick={handleDiscard} disabled={!dirty}>Discard</Button>
+            </Stack>
+          )}
+        </header>
+        <main>
+          {doc ? (
+            <PivotEditor
+              doc={doc}
+              setDoc={setDoc}
+              saveRef={saveRef}
+              discardRef={discardRef}
+              onDirty={handleDirty}
+            />
+          ) : (
+            <p>Open Example.osheet.json to start.</p>
+          )}
+        </main>
+      </div>
+    </ThemeProvider>
   );
 }
